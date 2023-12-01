@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROS Websocket Example</title>
+</head>
+<body>
+
+<h1>ROS Websocket Example</h1>
+
+<!-- Input fields for ROS Websocket configuration -->
+<label for="websocketPort">Websocket Port:</label>
+<input type="text" id="websocketPort" placeholder="ROS Websocket Port" value="9090">
+<br>
+
+<label for="bagList">Select Bag File:</label>
+<select id="bagList"></select>
+<br>
+
+<!-- Button to send data to ROS server -->
+<button onclick="sendData()">Send Data to ROS</button>
+
+<script>
+    // Function to populate bag file list
+    function populateBagList(bagFiles) {
+        var selectElement = document.getElementById("bagList");
+
+        // Clear existing options
+        selectElement.innerHTML = "";
+
+        // Add bag file options
+        for (var i = 0; i < bagFiles.length; i++) {
+            var option = document.createElement("option");
+            option.value = bagFiles[i];
+            option.text = bagFiles[i];
+            selectElement.add(option);
+        }
+    }
+
+    // Function to send data to ROS server
+    function sendData() {
+        // Get values from input fields
+        var websocketPort = document.getElementById("websocketPort").value;
+        var selectedBagFile = document.getElementById("bagList").value;
+
+        // Create a WebSocket connection
+        var socket = new WebSocket("ws://localhost:" + websocketPort);
+
+        // Connection opened
+        socket.addEventListener('open', function (event) {
+            console.log("WebSocket connection opened");
+
+            // Sample data to send (modify as needed)
+            var dataToSend = {
+                data: "Hello, ROS!",
+                bagFile: selectedBagFile,
+            };
+
+            // Convert data to JSON and send it
+            socket.send(JSON.stringify(dataToSend));
+        });
+
+        // Listen for messages
+        socket.addEventListener('message', function (event) {
+            console.log('Message from ROS server:', event.data);
+        });
+
+        // Connection closed
+        socket.addEventListener('close', function (event) {
+            console.log('WebSocket connection closed');
+        });
+    }
+
+    // Fetch bag file list from Spring server on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        fetchBagList();
+    });
+
+    // Function to fetch bag file list from Spring server
+    function fetchBagList() {
+        // Fetch bag file list from Spring server
+        fetch('http://localhost:8080/bag-list')
+            .then(response => response.json())
+            .then(data => {
+                // Populate bag file list on the page
+                populateBagList(data);
+            })
+            .catch(error => console.error('Error fetching bag list:', error));
+    }
+</script>
+
+</body>
+</html>
